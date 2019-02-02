@@ -1,0 +1,19 @@
+# base image
+FROM continuumio/miniconda3:latest
+
+WORKDIR /home
+RUN mkdir -p notebook
+
+# load in the environment.yml file
+COPY environment_jupyterbase.yml .
+
+# create the environment
+RUN conda config --remove channels defaults
+RUN conda config --add channels conda-forge
+RUN conda update -n base conda -y 
+RUN conda env update --file ./environment_jupyterbase.yml
+RUN conda clean --all -y
+
+# additional pip packages if required
+#COPY requirements_jupyterbase.txt .
+#RUN pip install --upgrade pip --no-cache-dir -r ./requirements_jupyterbase.txt

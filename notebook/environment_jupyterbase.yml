@@ -1,0 +1,17 @@
+name: base
+
+channels:
+ - conda-forge
+
+dependencies:
+  - pandas
+  - xlrd
+  - numpy
+  - matplotlib
+  - statsmodels
+  - scikit-learn
+  - bokeh
+  - notebook
+  - jupyter
+  - jupyter_contrib_nbextensions
+  - jupyterlab

@@ -1,0 +1,51 @@
+version: '3'
+
+#volumes:
+  # for persistence between restarts
+#  postgres_data: {}
+#  notebook: {}
+#code: {}
+#  app: {}
+
+services:
+#  db:
+#    image: postgres:latest
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#    environment:
+#      POSTGRES_USER: postgres
+#      POSTGRES_PASSWORD: dbpw
+#    ports: #make db accessible locally
+#      - "127.0.0.1:5432:5432"
+
+  jupyterbase:
+    image: lemartinet/jupyterbase
+    build: 
+      context: ./notebook
+      dockerfile: Dockerfile_jupyterbase
+    volumes:
+      - ./:/home/
+    ports: 
+      - "8888:8888"
+    command: "jupyter notebook --port=8888 --ip=0.0.0.0 --no-browser --allow-root --NotebookApp.token='jupyter'"
+
+  myjupyter:
+    image: lemartinet/myjupyter
+    build: 
+      context: ./notebook
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/home/
+    ports: 
+      - "8888:8888"
+    command: "jupyter notebook --port=8888 --ip=0.0.0.0 --no-browser --allow-root --NotebookApp.token='jupyter'"
+  
+  flask-dash:
+    image: lemartinet/app
+    build: ./app
+    volumes:
+      - ./app:/home/app
+    ports:
+      - "5000:5000"
+    command: "python app.py"
+    

@@ -1,0 +1,29 @@
+{% extends "layout.html.j2" %}
+
+{% block title %} Bike Planner {% endblock %}
+
+{% block body %}
+
+<h1>Bike Planner</h1>
+
+<p>Please enter a street address</p>
+
+<form  action="/" method="GET">
+    <div class="form-group">
+        <label for="street">street:</label>
+        <input type="text" id="street" name='street' placeholder="e.g. ">
+    </div>
+
+    <div>
+        <button type="submit" class="btn btn-default btn-lg">What is the improvement?</button>
+    </div>
+</form>
+
+<br/>
+
+{% if street %}
+You entered: {{street}} <br/>
+<img src="{{map}}" height=600>
+The expected accident rate after bike lane installation is: {{predict.values}}
+{% endif %}
+{% endblock %}
