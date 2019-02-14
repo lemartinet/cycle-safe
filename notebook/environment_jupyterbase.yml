@@ -10,6 +10,7 @@ dependencies:
   - matplotlib
   - statsmodels
   - scikit-learn
+  - imbalanced-learn
   - bokeh
   - notebook
   - jupyter

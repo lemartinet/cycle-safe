@@ -5,7 +5,7 @@ html {
 
 .map {
     position: fixed;
-    top: 70px;
+    top: 120px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -26,6 +26,17 @@ html {
     display: none;
 }
 
+.leaflet-testbox {
+    text-align: center;
+    font-size: 14pt;
+    padding-bottom: 1em;
+}
+
 h1 {
     text-align: center;
+    margin-top: 0;
+}
+
+span.bike {
+    font-size: 40px;
 }

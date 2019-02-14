@@ -1,4 +1,4 @@
-# Arrive Alive
+# Cycle Safe
 
 Plan a safer bike route in Boston. Project built during the Insight Data Science Fellows Program
 
@@ -12,8 +12,11 @@ docker-compose up --build flask-dash
 ```
 Then open your browser at http://localhost:5000/
 
-## Data 
+## Data
+
+The data is coming from the city of Boston and from the Massachusetts DOT.
 
 ## Model
 
+I currently use a logistic regression to classify a street segment into safe or risky.
 

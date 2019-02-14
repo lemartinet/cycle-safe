@@ -6,3 +6,7 @@ tutos/
 docs/
 data/
 notebook/fig/
+app/static/node_modules/
+app/static/package-lock.json
+.vscode
+proj.code-workspace
