@@ -195,18 +195,29 @@ module.exports = {
 var L = require('leaflet'),
     Router = require('./router'),
     util = require('./util'),
+    nearest = require('turf-nearest'),
     extent = require('turf-extent');
     gauge = require('gauge-progress')(),
     lineDistance = require('@turf/line-distance'),
     config = require('./config');
 
-L.Icon.Default.imagePath = 'images/';
+// L.Icon.Default.imagePath = 'images/';
 
 require('leaflet.icon.glyph');
 require('leaflet-routing-machine');
 require('leaflet-control-geocoder');
 
 var map = L.map('map');
+
+function toPoint (wp) {
+    return {
+        type: 'Feature',
+        geometry: {
+            type: 'Point',
+            coordinates: [wp.lng, wp.lat]
+        }
+    };
+}
 
 L.tileLayer('https://api.mapbox.com/v4/mapbox.outdoors/{z}/{x}/{y}{r}.png?access_token={token}', {
         attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
@@ -237,13 +248,9 @@ xhr.open('GET', 'static/map1.geojson');
 xhr.send();
 
 var control;
+var top_risky = [];
 function initialize(network) {
-    // var bbox = extent(network);
-    // var bounds = L.latLngBounds([bbox[1], bbox[0]], [bbox[3], bbox[2]]);
-    // map.fitBounds(bounds);
-
-    // L.rectangle(bounds, {color: 'orange', weight: 1, fillOpacity: 0.03, interactive: false}).addTo(map);
-
+    
     var router = new Router(network);
     control = L.Routing.control({
         createMarker: function(i, wp) {
@@ -265,20 +272,28 @@ function initialize(network) {
             var routes = e.routes;
             // infoContainer.innerHTML = 'Average estimated risk: ' + (routes[0].summary.totalTime/routes[0].coordinates.length);
             infoContainer.innerHTML = 'Cumulated risk: ' + routes[0].summary.totalTime.toFixed(2);
+            
+            // // draw pins at the dangerous points
+            // if (top_risky) {
+            //     map.removeLayer(top_risky);
+            //     // clear things in top_risky, top_risky.removeLayer();
+            // }
+
+            // // send routes[0].coordinates to server and store results in list_risky
+            // var list_risky = [];
+            // for (var i=0; i < list_risky.length; i++)
+            //     top_risky.addLayer(L.marker([39.61, -105.02]).bindPopup('Risk level: '));
+            // // top_risky = L.layerGroup([marker1, marker2, marker3]);
+            // map.addLayer(top_risky);  
         })
         .addTo(map);
 
-        var container = L.DomUtil.create('div', 'leaflet-testbox');
+    var container = L.DomUtil.create('div', 'leaflet-testbox');
     // 	input = L.DomUtil.create('input', '', container);
     // control.getContainer().appendChild(container);
     // control.getContainer().appendChild(input);
     var infoContainer = document.querySelector('.leaflet-routing-container');
     infoContainer.appendChild(container);
-
-    control.setWaypoints([
-		[42.350, -71.097], // home
-		[42.350, -71.050],  // insight
-    ]);
 
     L.Routing.errorControl(control).addTo(map);
 
@@ -309,21 +324,33 @@ function initialize(network) {
 
     var networkLayer = L.layerGroup(),
         vertices = router._pathFinder._graph.sourceVertices,
+        weights = router._pathFinder._graph.vertices,
         renderer = L.canvas().addTo(map);
     nodeNames.forEach(function(nodeName) {
         var node = graph[nodeName];
         Object.keys(node).forEach(function(neighbor) {
             var c1 = vertices[nodeName],
                 c2 = vertices[neighbor];
-            L.polyline([[c1[1], c1[0]], [c2[1], c2[0]]], { weight: 1, opacity: 0.4, renderer: renderer, interactive: false })
+                w = weights[nodeName][neighbor];
+            function getColor(value){
+                //value from 0 to 1
+                var hue=((1-value)*120).toString(10);
+                return ["hsl(",hue,",100%,50%)"].join("");
+            }
+            L.polyline([[c1[1], c1[0]], [c2[1], c2[0]]], { weight: 2, color:getColor(w), renderer: renderer, interactive: false })
                 .addTo(networkLayer)
                 .bringToBack();
         });
     });
 
     L.control.layers(null, {
-        'Routing Network': networkLayer
+        'Risk Layer': networkLayer,
     }, { position: 'bottomright'}).addTo(map);
+
+    control.setWaypoints([
+		[42.350, -71.097], // home
+		[42.350, -71.050],  // insight
+    ]);
 
 }
 
@@ -335,9 +362,9 @@ function initialize(network) {
 
 window.onload = function() {
 	// setup the JSON Submit button 
-	document.getElementById("JSONsubmit").onclick = function() {
-		sendJSON();
-	};
+	// document.getElementById("JSONsubmit").onclick = function() {
+	// 	sendJSON();
+	// };
 }
 
 function sendJSON() {
@@ -403,7 +430,7 @@ function update(network) {
     control.route({});
 }
 
-},{"./config":3,"./router":85,"./util":86,"@turf/line-distance":10,"gauge-progress":21,"leaflet":36,"leaflet-control-geocoder":33,"leaflet-routing-machine":34,"leaflet.icon.glyph":35,"turf-extent":44}],5:[function(require,module,exports){
+},{"./config":3,"./router":85,"./util":86,"@turf/line-distance":10,"gauge-progress":21,"leaflet":36,"leaflet-control-geocoder":33,"leaflet-routing-machine":34,"leaflet.icon.glyph":35,"turf-extent":44,"turf-nearest":50}],5:[function(require,module,exports){
 'use strict';
 
 var invariant = require('@turf/invariant');
