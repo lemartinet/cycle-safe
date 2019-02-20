@@ -31,6 +31,9 @@ L.tileLayer('https://api.mapbox.com/v4/mapbox.outdoors/{z}/{x}/{y}{r}.png?access
     })
     .addTo(map);
 
+var net;
+L.alpha = 1;
+
 gauge.start();
 var xhr = new XMLHttpRequest();
 xhr.addEventListener('progress', function(oEvent) {
@@ -43,7 +46,8 @@ xhr.onload = function() {
     if (xhr.status === 200) {
         gauge.progress(100, 100);
         setTimeout(function() {
-            initialize(JSON.parse(xhr.responseText));
+            net = JSON.parse(xhr.responseText);
+            initialize(net);
         });
     }
     else {
@@ -76,9 +80,14 @@ function initialize(network) {
         .on('routesfound', function(e) {
             var infoContainer = document.querySelector('.leaflet-testbox');
             var routes = e.routes;
-            // infoContainer.innerHTML = 'Average estimated risk: ' + (routes[0].summary.totalTime/routes[0].coordinates.length);
-            infoContainer.innerHTML = 'Cumulated risk: ' + routes[0].summary.totalTime.toFixed(2);
-            
+            infoContainer.innerHTML = 'Distance (km): ' + (routes[0].summary.totalDistance/1000).toFixed(2);
+            if (L.alpha == 1) {
+                infoContainer.innerHTML += '<br/>Cumulated risk: ' + routes[0].summary.totalTime.toFixed(2);
+                infoContainer.innerHTML += '<br/>Risk/distance: ' + (1000*routes[0].summary.totalTime/routes[0].summary.totalDistance).toFixed(2);
+                infoContainer.innerHTML += '<br/>Average risk: ' + (routes[0].summary.totalTime/routes[0].coordinates.length).toFixed(2);
+                infoContainer.innerHTML +=
+                    '<p style="font-size: 10pt;">Note: the risk of a street segment is the probability of being part of the class "street with accident".</p>';
+            }
             // // draw pins at the dangerous points
             // if (top_risky) {
             //     map.removeLayer(top_risky);
@@ -168,9 +177,27 @@ function initialize(network) {
 
 window.onload = function() {
 	// setup the JSON Submit button 
-	// document.getElementById("JSONsubmit").onclick = function() {
-	// 	sendJSON();
-	// };
+	document.getElementById("fastest_route").onclick = function() {
+        // sendJSON();
+        L.alpha = 0;
+        update(net);
+        // stop link from reloading the page
+	    event.preventDefault();
+    };
+    document.getElementById("safest_route").onclick = function() {
+        // sendJSON();
+        L.alpha = 1;
+        update(net);
+        // stop link from reloading the page
+	    event.preventDefault();
+    };
+    document.getElementById("interm_route").onclick = function() {
+        // sendJSON();
+        L.alpha = 0.5;
+        update(net);
+        // stop link from reloading the page
+	    event.preventDefault();
+	};
 }
 
 function sendJSON() {
@@ -224,14 +251,13 @@ function sendJSON() {
 
 function update(network) {
 	// var firstload = 1;
-	
-    // var router = new Router(network);
-    options = {
-        serviceUrl: 'https://api.mapbox.com/directions/v5',
-        profile: 'mapbox/cycling',
-        useHints: false
-    };
-    var router = L.routing.mapbox(config.apiToken, options);
+    var router = new Router(network);
+    // options = {
+    //     serviceUrl: 'https://api.mapbox.com/directions/v5',
+    //     profile: 'mapbox/cycling',
+    //     useHints: false
+    // };
+    // var router = L.routing.mapbox(config.apiToken, options);
     control.router = control._router = control.options.router = router;
     control.route({});
 }

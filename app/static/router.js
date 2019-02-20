@@ -39,13 +39,14 @@ var highwaySpeeds = {
 var unknowns = {};
 
 function weightFn(a, b, props) {
-    var d = distance(point(a), point(b)) * 1000,
+    var d = distance(point(a), point(b)) * 1000 / 100, // /100 is to normalize between [0,1]
         factor = 0.9,
         type = props.highway,
         forwardSpeed,
         backwardSpeed,
         // risk = (1 + props.crash);
-        risk = 0.01 + props.crash;
+        risk = 0.01 + props.crash,
+        alpha = L.alpha;
 
     // if (props.maxspeed) {
     //     forwardSpeed = backwardSpeed = Number(props.maxspeed);
@@ -69,9 +70,9 @@ function weightFn(a, b, props) {
 
     return {
         // forward: forwardSpeed && (d*risk / (forwardSpeed / 3.6)),
-        forward: 1*risk,
+        forward: alpha*risk + (1-alpha)*d,
         // backward: backwardSpeed && (d*risk / (backwardSpeed / 3.6)),
-        backward: 1*risk,
+        backward: alpha*risk + (1-alpha)*d,
     };
 }
 

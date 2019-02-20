@@ -225,6 +225,9 @@ L.tileLayer('https://api.mapbox.com/v4/mapbox.outdoors/{z}/{x}/{y}{r}.png?access
     })
     .addTo(map);
 
+var net;
+L.alpha = 1;
+
 gauge.start();
 var xhr = new XMLHttpRequest();
 xhr.addEventListener('progress', function(oEvent) {
@@ -237,7 +240,8 @@ xhr.onload = function() {
     if (xhr.status === 200) {
         gauge.progress(100, 100);
         setTimeout(function() {
-            initialize(JSON.parse(xhr.responseText));
+            net = JSON.parse(xhr.responseText);
+            initialize(net);
         });
     }
     else {
@@ -270,9 +274,14 @@ function initialize(network) {
         .on('routesfound', function(e) {
             var infoContainer = document.querySelector('.leaflet-testbox');
             var routes = e.routes;
-            // infoContainer.innerHTML = 'Average estimated risk: ' + (routes[0].summary.totalTime/routes[0].coordinates.length);
-            infoContainer.innerHTML = 'Cumulated risk: ' + routes[0].summary.totalTime.toFixed(2);
-            
+            infoContainer.innerHTML = 'Distance (km): ' + (routes[0].summary.totalDistance/1000).toFixed(2);
+            if (L.alpha == 1) {
+                infoContainer.innerHTML += '<br/>Cumulated risk: ' + routes[0].summary.totalTime.toFixed(2);
+                infoContainer.innerHTML += '<br/>Risk/distance: ' + (1000*routes[0].summary.totalTime/routes[0].summary.totalDistance).toFixed(2);
+                infoContainer.innerHTML += '<br/>Average risk: ' + (routes[0].summary.totalTime/routes[0].coordinates.length).toFixed(2);
+                infoContainer.innerHTML +=
+                    '<p style="font-size: 10pt;">Note: the risk of a street segment is the probability of being part of the class "street with accident".</p>';
+            }
             // // draw pins at the dangerous points
             // if (top_risky) {
             //     map.removeLayer(top_risky);
@@ -362,9 +371,27 @@ function initialize(network) {
 
 window.onload = function() {
 	// setup the JSON Submit button 
-	// document.getElementById("JSONsubmit").onclick = function() {
-	// 	sendJSON();
-	// };
+	document.getElementById("fastest_route").onclick = function() {
+        // sendJSON();
+        L.alpha = 0;
+        update(net);
+        // stop link from reloading the page
+	    event.preventDefault();
+    };
+    document.getElementById("safest_route").onclick = function() {
+        // sendJSON();
+        L.alpha = 1;
+        update(net);
+        // stop link from reloading the page
+	    event.preventDefault();
+    };
+    document.getElementById("interm_route").onclick = function() {
+        // sendJSON();
+        L.alpha = 0.5;
+        update(net);
+        // stop link from reloading the page
+	    event.preventDefault();
+	};
 }
 
 function sendJSON() {
@@ -418,14 +445,13 @@ function sendJSON() {
 
 function update(network) {
 	// var firstload = 1;
-	
-    // var router = new Router(network);
-    options = {
-        serviceUrl: 'https://api.mapbox.com/directions/v5',
-        profile: 'mapbox/cycling',
-        useHints: false
-    };
-    var router = L.routing.mapbox(config.apiToken, options);
+    var router = new Router(network);
+    // options = {
+    //     serviceUrl: 'https://api.mapbox.com/directions/v5',
+    //     profile: 'mapbox/cycling',
+    //     useHints: false
+    // };
+    // var router = L.routing.mapbox(config.apiToken, options);
     control.router = control._router = control.options.router = router;
     control.route({});
 }
@@ -41641,13 +41667,14 @@ var highwaySpeeds = {
 var unknowns = {};
 
 function weightFn(a, b, props) {
-    var d = distance(point(a), point(b)) * 1000,
+    var d = distance(point(a), point(b)) * 1000 / 100, // /100 is to normalize between [0,1]
         factor = 0.9,
         type = props.highway,
         forwardSpeed,
         backwardSpeed,
         // risk = (1 + props.crash);
-        risk = 0.01 + props.crash;
+        risk = 0.01 + props.crash,
+        alpha = L.alpha;
 
     // if (props.maxspeed) {
     //     forwardSpeed = backwardSpeed = Number(props.maxspeed);
@@ -41671,9 +41698,9 @@ function weightFn(a, b, props) {
 
     return {
         // forward: forwardSpeed && (d*risk / (forwardSpeed / 3.6)),
-        forward: 1*risk,
+        forward: alpha*risk + (1-alpha)*d,
         // backward: backwardSpeed && (d*risk / (backwardSpeed / 3.6)),
-        backward: 1*risk,
+        backward: alpha*risk + (1-alpha)*d,
     };
 }
 
