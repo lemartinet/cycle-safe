@@ -16,3 +16,4 @@ dependencies:
   - jupyter
   - jupyter_contrib_nbextensions
   - jupyterlab
+  - seaborn

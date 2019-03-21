@@ -17,3 +17,6 @@ RUN conda clean --all -y
 # additional pip packages if required
 #COPY requirements_jupyterbase.txt .
 #RUN pip install --upgrade pip --no-cache-dir -r ./requirements_jupyterbase.txt
+
+# install xelatex for export to pdf
+RUN apt-get update; apt-get -y install texlive-xetex
